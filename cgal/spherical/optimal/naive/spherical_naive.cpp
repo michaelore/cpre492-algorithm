@@ -159,6 +159,7 @@ int main() {
             cout << "\tLocal max with " << i << " point(s) removed: " << (escapable ? "No" : "Yes") << endl;
             //cout << "\t" << escapable << endl;
         }
+        cout << "\tLocal max with " << zeroes.size() << " point(s) removed: " << (true ? "No" : "Yes") << endl;
         cout << "\tLesser point count:  " << min(positives, negatives) << endl;
         cout << "\tGreater point count: " << max(positives, negatives) << endl;
         
