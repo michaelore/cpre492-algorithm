@@ -14,9 +14,9 @@
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Exact_spherical_kernel_3 S;
-typedef CGAL::Point_2<K>             Point_2;
 typedef CGAL::Point_3<S>             Point_3;
 typedef CGAL::Vector_3<S>            Vector_3;
+typedef CGAL::Line_3<S>              Line_3;
 typedef CGAL::Plane_3<S>             Plane_3;
 typedef CGAL::Sphere_3<S>            Sphere_3;
 typedef CGAL::Circle_3<S>            Circle_3;
@@ -27,7 +27,7 @@ using namespace std;
 
 Sphere_3 UNIT_SPHERE(CGAL::ORIGIN, 1);
 
-Point_3 cartesian(Point_2 point2) {
+Point_3 cartesian(CGAL::Point_2<K> point2) {
     K::FT lat = point2.x()*TAU/360;
     K::FT lon = point2.y()*TAU/360;
     K::FT x = cos(lon)*sin(lat);
@@ -37,24 +37,36 @@ Point_3 cartesian(Point_2 point2) {
     return result;
 }
 
-Point_2 spherical(Arc_Point_3 ap) {
+CGAL::Point_2<K> spherical(Arc_Point_3 ap) {
     double x = CGAL::to_double(ap.x());
     double y = CGAL::to_double(ap.y());
     double z = CGAL::to_double(ap.z());
     double lon = atan2(y, x)*360/TAU;
     double lat = acos(z)*360/TAU;
-    Point_2 result(lat, lon);
+    CGAL::Point_2<K> result(lat, lon);
     return result;
 }
 
-Point_2 spherical(Point_3 p) {
+CGAL::Point_2<K> spherical(Point_3 p) {
     double x = CGAL::to_double(p.x());
     double y = CGAL::to_double(p.y());
     double z = CGAL::to_double(p.z());
     double r = sqrt(x*x+y*y+z*z);
     double lon = atan2(y, x)*360/TAU;
     double lat = acos(z/r)*360/TAU;
-    Point_2 result(lat, lon);
+    CGAL::Point_2<K> result(lat, lon);
+    return result;
+}
+
+Plane_3 make_stereographic_plane(Point_3 p3) {
+    Plane_3 result(p3, p3-CGAL::ORIGIN);
+    return result;
+}
+
+CGAL::Point_2<S> project(Plane_3 stereo, Point_3 p3) {
+    Line_3 line(p3, CGAL::ORIGIN);
+    CGAL::Object projection = CGAL::intersection(line, stereo);
+    CGAL::Point_2<S> result = stereo.to_2d(CGAL::object_cast<Point_3>(projection));
     return result;
 }
 
@@ -65,9 +77,9 @@ void print_circumcenters(Point_3 a, Point_3 b, Point_3 c) {
     CGAL::intersection(UNIT_SPHERE, plane_ab, plane_bc, back_inserter(circumcenters));
     for (int i = 0; i < circumcenters.size(); i++) {
         Arc_Point_3 ap = CGAL::object_cast<pair<Arc_Point_3, unsigned> >(circumcenters[i]).first;
-        cout << "\t" << spherical(ap) << endl;
+        //cout << "\t" << spherical(ap) << endl;
     }
-    cout << "\t" << spherical(CGAL::circumcenter(a, b, c)) << endl;
+    //cout << "\t" << spherical(CGAL::circumcenter(a, b, c)) << endl;
 }
 
 Arc_3 get_opposing_arc(Circle_3 circle, Point_3 point) {
@@ -92,20 +104,23 @@ Arc_3 get_opposing_arc(Circle_3 circle, Point_3 point) {
 }
 
 int main() {
-    istream_iterator<Point_2> iend;
+    istream_iterator<CGAL::Point_2<K> > iend;
     vector<Point_3> coordinates;
-    for (istream_iterator<Point_2> it(cin); it != iend; it++) {
+    CGAL::Point_2<K> proj_point;
+    for (istream_iterator<CGAL::Point_2<K> > it(cin); it != iend; it++) {
         coordinates.push_back(cartesian(*it));
+        proj_point = *it;
     }
+    Plane_3 stereo = make_stereographic_plane(cartesian(proj_point));
 
-    vector<vector<Point_2> > circlesets(coordinates.size());
+    vector<vector<CGAL::Point_2<K> > > circlesets(coordinates.size());
     CGAL::Combination_enumerator<vector<Point_3>::iterator> set3(3, coordinates.begin(), coordinates.end());
     for (; !set3.finished(); set3++) {
-        cout << "Combination: {";
+        //cout << "Combination: {";
         for (int i = 0; i < 3; i++) {
-            cout << spherical(*set3[i]) << ", ";
+            //cout << spherical(*set3[i]) << ", ";
         }
-        cout << "}" << endl;
+        //cout << "}" << endl;
         Plane_3 divide = Plane_3(*set3[0], *set3[1], *set3[2]);
         Circle_3 circle = Circle_3(*set3[0], *set3[1], *set3[2]);
         int positives = 0;
@@ -156,13 +171,25 @@ int main() {
                     break;
                 }
             }
-            cout << "\tLocal max with " << i << " point(s) removed: " << (escapable ? "No" : "Yes") << endl;
+            //cout << "\tLocal max with " << i << " point(s) removed: " << (escapable ? "No" : "Yes") << endl;
             //cout << "\t" << escapable << endl;
         }
-        cout << "\tLocal max with " << zeroes.size() << " point(s) removed: " << (true ? "No" : "Yes") << endl;
-        cout << "\tLesser point count:  " << min(positives, negatives) << endl;
-        cout << "\tGreater point count: " << max(positives, negatives) << endl;
-        
+        //cout << "\tLocal max with " << zeroes.size() << " point(s) removed: " << (true ? "No" : "Yes") << endl;
+        //cout << "\tLesser point count:  " << min(positives, negatives) << endl;
+        //cout << "\tGreater point count: " << max(positives, negatives) << endl;
+        if (positives == 0 || negatives == 0) {
+            CGAL::Point_2<S> points2[3];
+            points2[0] = project(stereo, *set3[0]);
+            points2[1] = project(stereo, *set3[1]);
+            points2[2] = project(stereo, *set3[2]);
+            for (int i = 0; i < 3; i++) {
+                cout << CGAL::to_double(points2[i].x()) << "\t" << CGAL::to_double(points2[i].y()) << "\t";
+            }
+            CGAL::Circle_2<S> circle(points2[0], points2[1], points2[2]);
+            cout << CGAL::to_double(circle.center().x()) << "\t" << CGAL::to_double(circle.center().y()) << "\t";
+            cout << sqrt(CGAL::to_double((circle.center()-points2[0]).squared_length()));
+            cout << endl;
+        }
         //print_circumcenters(*set3[0], *set3[1], *set3[2]);
     }
 
