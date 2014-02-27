@@ -1,6 +1,9 @@
 #!/usr/bin/env Rscript
 require(plotrix)
-circledata <- read.table('00064results0.txt')
+
+args = commandArgs(trailingOnly = TRUE)
+
+circledata <- read.table(args[1])
 xmin = min(c(circledata$V1, circledata$V3, circledata$V5))
 xmax = max(c(circledata$V1, circledata$V3, circledata$V5))
 ymin = min(c(circledata$V2, circledata$V4, circledata$V6))
