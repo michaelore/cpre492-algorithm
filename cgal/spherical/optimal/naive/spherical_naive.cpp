@@ -70,6 +70,20 @@ CGAL::Point_2<S> project(Plane_3 stereo, Point_3 p3) {
     return result;
 }
 
+CGAL::Point_2<K> projection(Point_3 p3) {
+    CGAL::Point_2<K> sphere_coord = spherical(p3);
+    double phi = sphere_coord.x();
+    double lam = sphere_coord.y();
+    double lam0 = 0;
+    double phi1 = 0;
+    double R = 1;
+    double k = 2*R/(1 + sin(phi1)*sin(phi)+cos(phi1)*cos(phi)*cos(lam-lam0));
+    double x = k*cos(phi)*sin(lam-lam0);
+    double y = k*(cos(phi1)*sin(phi)-sin(phi1)*cos(phi)*cos(lam-lam0));
+    CGAL::Point_2<K> result(x, y);
+    return result;
+}
+
 void print_circumcenters(Point_3 a, Point_3 b, Point_3 c) {
     Plane_3 plane_ab = CGAL::bisector(a, b);
     Plane_3 plane_bc = CGAL::bisector(b, c);
@@ -103,7 +117,11 @@ Arc_3 get_opposing_arc(Circle_3 circle, Point_3 point) {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        return 1;
+    }
+    int k = atoi(argv[1]);
     istream_iterator<CGAL::Point_2<K> > iend;
     vector<Point_3> coordinates;
     CGAL::Point_2<K> proj_point;
@@ -173,23 +191,23 @@ int main() {
             }
             //cout << "\tLocal max with " << i << " point(s) removed: " << (escapable ? "No" : "Yes") << endl;
             //cout << "\t" << escapable << endl;
+            if (!escapable && (positives + i == k || negatives + i == k)) {
+                CGAL::Point_2<S> points2[3];
+                points2[0] = project(stereo, *set3[0]);
+                points2[1] = project(stereo, *set3[1]);
+                points2[2] = project(stereo, *set3[2]);
+                for (int i = 0; i < 3; i++) {
+                    cout << CGAL::to_double(points2[i].x()) << "\t" << CGAL::to_double(points2[i].y()) << "\t";
+                }
+                CGAL::Circle_2<S> circle(points2[0], points2[1], points2[2]);
+                cout << CGAL::to_double(circle.center().x()) << "\t" << CGAL::to_double(circle.center().y()) << "\t";
+                cout << sqrt(CGAL::to_double((circle.center()-points2[0]).squared_length()));
+                cout << endl;
+            }
         }
         //cout << "\tLocal max with " << zeroes.size() << " point(s) removed: " << (true ? "No" : "Yes") << endl;
         //cout << "\tLesser point count:  " << min(positives, negatives) << endl;
         //cout << "\tGreater point count: " << max(positives, negatives) << endl;
-        if (positives == 0 || negatives == 0) {
-            CGAL::Point_2<S> points2[3];
-            points2[0] = project(stereo, *set3[0]);
-            points2[1] = project(stereo, *set3[1]);
-            points2[2] = project(stereo, *set3[2]);
-            for (int i = 0; i < 3; i++) {
-                cout << CGAL::to_double(points2[i].x()) << "\t" << CGAL::to_double(points2[i].y()) << "\t";
-            }
-            CGAL::Circle_2<S> circle(points2[0], points2[1], points2[2]);
-            cout << CGAL::to_double(circle.center().x()) << "\t" << CGAL::to_double(circle.center().y()) << "\t";
-            cout << sqrt(CGAL::to_double((circle.center()-points2[0]).squared_length()));
-            cout << endl;
-        }
         //print_circumcenters(*set3[0], *set3[1], *set3[2]);
     }
 
