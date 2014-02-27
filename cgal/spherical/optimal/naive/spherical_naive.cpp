@@ -193,6 +193,11 @@ int main(int argc, char* argv[]) {
             //cout << "\t" << escapable << endl;
             if (!escapable && (positives + i == k || negatives + i == k)) {
                 CGAL::Point_2<S> points2[3];
+                /*
+                points2[0] = projection(*set3[0]);
+                points2[1] = projection(*set3[1]);
+                points2[2] = projection(*set3[2]);
+                */
                 points2[0] = project(stereo, *set3[0]);
                 points2[1] = project(stereo, *set3[1]);
                 points2[2] = project(stereo, *set3[2]);
