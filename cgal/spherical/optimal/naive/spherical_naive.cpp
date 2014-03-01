@@ -85,18 +85,6 @@ CGAL::Point_2<K> projection(Point_3 p3) {
     return result;
 }
 
-void print_circumcenters(Point_3 a, Point_3 b, Point_3 c) {
-    Plane_3 plane_ab = CGAL::bisector(a, b);
-    Plane_3 plane_bc = CGAL::bisector(b, c);
-    vector<CGAL::Object> circumcenters;
-    CGAL::intersection(UNIT_SPHERE, plane_ab, plane_bc, back_inserter(circumcenters));
-    for (int i = 0; i < circumcenters.size(); i++) {
-        Arc_Point_3 ap = CGAL::object_cast<pair<Arc_Point_3, unsigned> >(circumcenters[i]).first;
-        //cout << "\t" << spherical(ap) << endl;
-    }
-    //cout << "\t" << spherical(CGAL::circumcenter(a, b, c)) << endl;
-}
-
 Arc_3 get_opposing_arc(Circle_3 circle, Point_3 point) {
     Plane_3 orthogonal_plane(circle.center(), point-circle.center());
 
@@ -109,7 +97,6 @@ Arc_3 get_opposing_arc(Circle_3 circle, Point_3 point) {
     Arc_3 arc_two(circle, orthogonal_two, orthogonal_one);
     if (S().has_on_3_object()(arc_one, point)) {
         return arc_two;
-    //} else {
     } else if (S().has_on_3_object()(arc_two, point)) {
         return arc_one;
     } else {
@@ -137,11 +124,6 @@ int main(int argc, char* argv[]) {
     vector<vector<CGAL::Point_2<K> > > circlesets(coordinates.size());
     CGAL::Combination_enumerator<vector<Point_3>::iterator> set3(3, coordinates.begin(), coordinates.end());
     for (; !set3.finished(); set3++) {
-        //cout << "Combination: {";
-        for (int i = 0; i < 3; i++) {
-            //cout << spherical(*set3[i]) << ", ";
-        }
-        //cout << "}" << endl;
         Plane_3 divide = Plane_3(*set3[0], *set3[1], *set3[2]);
         Circle_3 circle = Circle_3(*set3[0], *set3[1], *set3[2]);
         int positives = 0;
@@ -192,15 +174,8 @@ int main(int argc, char* argv[]) {
                     break;
                 }
             }
-            //cout << "\tLocal max with " << i << " point(s) removed: " << (escapable ? "No" : "Yes") << endl;
-            //cout << "\t" << escapable << endl;
             if (!escapable && (positives + i == k || negatives + i == k)) {
                 CGAL::Point_2<S> points2[3];
-                /*
-                points2[0] = projection(*set3[0]);
-                points2[1] = projection(*set3[1]);
-                points2[2] = projection(*set3[2]);
-                */
                 points2[0] = project(stereo, *set3[0]);
                 points2[1] = project(stereo, *set3[1]);
                 points2[2] = project(stereo, *set3[2]);
@@ -213,10 +188,6 @@ int main(int argc, char* argv[]) {
                 cout << endl;
             }
         }
-        //cout << "\tLocal max with " << zeroes.size() << " point(s) removed: " << (true ? "No" : "Yes") << endl;
-        //cout << "\tLesser point count:  " << min(positives, negatives) << endl;
-        //cout << "\tGreater point count: " << max(positives, negatives) << endl;
-        //print_circumcenters(*set3[0], *set3[1], *set3[2]);
     }
 
     return 0;
