@@ -72,8 +72,8 @@ CGAL::Point_2<S> project(Plane_3 stereo, Point_3 p3) {
 
 CGAL::Point_2<K> projection(Point_3 p3) {
     CGAL::Point_2<K> sphere_coord = spherical(p3);
-    double phi = sphere_coord.x();
-    double lam = sphere_coord.y();
+    double phi = sphere_coord.x()*TAU/360;
+    double lam = sphere_coord.y()*TAU/360;
     double lam0 = 0;
     double phi1 = 0;
     double R = 1;
