@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Exact_spherical_kernel_3.h>
@@ -118,18 +119,20 @@ Arc_3 get_opposing_arc(Circle_3 circle, Point_3 point) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
+    if (argc != 3) {
         return 1;
     }
     int k = atoi(argv[1]);
     istream_iterator<CGAL::Point_2<K> > iend;
     vector<Point_3> coordinates;
-    CGAL::Point_2<K> proj_point;
-    for (istream_iterator<CGAL::Point_2<K> > it(cin); it != iend; it++) {
+    Point_3 proj_point;
+    ifstream ifs(argv[2], ifstream::in);
+    for (istream_iterator<CGAL::Point_2<K> > it(ifs); it != iend; it++) {
         coordinates.push_back(cartesian(*it));
-        proj_point = *it;
+        proj_point = cartesian(*it);
     }
-    Plane_3 stereo = make_stereographic_plane(cartesian(proj_point));
+    ifs.close();
+    Plane_3 stereo = make_stereographic_plane(proj_point);
 
     vector<vector<CGAL::Point_2<K> > > circlesets(coordinates.size());
     CGAL::Combination_enumerator<vector<Point_3>::iterator> set3(3, coordinates.begin(), coordinates.end());
