@@ -7,6 +7,8 @@
 #include <CGAL/Circular_arc_3.h>
 #include <CGAL/Combination_enumerator.h>
 
+#include <Stereographic_projector.h>
+
 #include <vector>
 #include <utility>
 #include <cmath>
@@ -23,6 +25,7 @@ typedef CGAL::Sphere_3<S>            Sphere_3;
 typedef CGAL::Circle_3<S>            Circle_3;
 typedef CGAL::Circular_arc_3<S> Arc_3;
 typedef CGAL::Circular_arc_point_3<S> Arc_Point_3;
+typedef CGAL::Stereographic_projector<S> Stereo_Projector;
 
 using namespace std;
 
@@ -38,17 +41,8 @@ Point_3 cartesian(CGAL::Point_2<K> point2) {
     return result;
 }
 
-CGAL::Point_2<K> spherical(Arc_Point_3 ap) {
-    double x = CGAL::to_double(ap.x());
-    double y = CGAL::to_double(ap.y());
-    double z = CGAL::to_double(ap.z());
-    double lon = atan2(y, x)*360/TAU;
-    double lat = acos(z)*360/TAU;
-    CGAL::Point_2<K> result(lat, lon);
-    return result;
-}
-
-CGAL::Point_2<K> spherical(Point_3 p) {
+template <class P3>
+CGAL::Point_2<K> spherical(P3 p) {
     double x = CGAL::to_double(p.x());
     double y = CGAL::to_double(p.y());
     double z = CGAL::to_double(p.z());
@@ -56,18 +50,6 @@ CGAL::Point_2<K> spherical(Point_3 p) {
     double lon = atan2(y, x)*360/TAU;
     double lat = acos(z/r)*360/TAU;
     CGAL::Point_2<K> result(lat, lon);
-    return result;
-}
-
-Plane_3 make_stereographic_plane(Point_3 p3) {
-    Plane_3 result(p3, p3-CGAL::ORIGIN);
-    return result;
-}
-
-CGAL::Point_2<S> project(Plane_3 stereo, Point_3 p3) {
-    Line_3 line(p3, CGAL::ORIGIN);
-    CGAL::Object projection = CGAL::intersection(line, stereo);
-    CGAL::Point_2<S> result = stereo.to_2d(CGAL::object_cast<Point_3>(projection));
     return result;
 }
 
@@ -119,7 +101,7 @@ int main(int argc, char* argv[]) {
         proj_point = cartesian(*it);
     }
     ifs.close();
-    Plane_3 stereo = make_stereographic_plane(proj_point);
+    Stereo_Projector stereo(UNIT_SPHERE, proj_point);
 
     vector<vector<CGAL::Point_2<K> > > circlesets(coordinates.size());
     CGAL::Combination_enumerator<vector<Point_3>::iterator> set3(3, coordinates.begin(), coordinates.end());
@@ -176,9 +158,9 @@ int main(int argc, char* argv[]) {
             }
             if (!escapable && (positives + i == k || negatives + i == k)) {
                 CGAL::Point_2<S> points2[3];
-                points2[0] = project(stereo, *set3[0]);
-                points2[1] = project(stereo, *set3[1]);
-                points2[2] = project(stereo, *set3[2]);
+                points2[0] = stereo(*set3[0]);
+                points2[1] = stereo(*set3[1]);
+                points2[2] = stereo(*set3[2]);
                 for (int i = 0; i < 3; i++) {
                     cout << CGAL::to_double(points2[i].x()) << "\t" << CGAL::to_double(points2[i].y()) << "\t";
                 }
