@@ -8,6 +8,7 @@
 #include <CGAL/Combination_enumerator.h>
 
 #include <Stereographic_projector.h>
+#include <Angle_range.h>
 
 #include <vector>
 #include <utility>
@@ -67,26 +68,6 @@ CGAL::Point_2<K> projection(Point_3 p3) {
     return result;
 }
 
-Arc_3 get_opposing_arc(Circle_3 circle, Point_3 point) {
-    Plane_3 orthogonal_plane(circle.center(), point-circle.center());
-
-    vector<CGAL::Object> orthogonal_points;
-    CGAL::intersection(circle, orthogonal_plane, back_inserter(orthogonal_points));
-    Arc_Point_3 orthogonal_one = CGAL::object_cast<pair<Arc_Point_3, unsigned> >(orthogonal_points[0]).first;
-    Arc_Point_3 orthogonal_two = CGAL::object_cast<pair<Arc_Point_3, unsigned> >(orthogonal_points[1]).first;
-
-    Arc_3 arc_one(circle, orthogonal_one, orthogonal_two);
-    Arc_3 arc_two(circle, orthogonal_two, orthogonal_one);
-    if (S().has_on_3_object()(arc_one, point)) {
-        return arc_two;
-    } else if (S().has_on_3_object()(arc_two, point)) {
-        return arc_one;
-    } else {
-        cout << "Something is very wrong!1" << endl;
-        return arc_one;
-    }
-}
-
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         return 1;
@@ -126,34 +107,12 @@ int main(int argc, char* argv[]) {
             bool escapable = false;
             CGAL::Combination_enumerator<vector<Point_3>::iterator> selected(retain, zeroes.begin(), zeroes.end());
             for (; !selected.finished(); selected++) {
-                bool empty_range = false;
-                Arc_3 full_range(circle);
-                CGAL::Object range = CGAL::make_object(full_range);
+                CGAL::Angle_range<S> range(circle);
                 for (int j = 0; j < retain; j++) {
-                    Arc_3 opp_arc = get_opposing_arc(circle, *selected[j]);
-                    vector<CGAL::Object> restricted;
-                    if (const Arc_3* casted_range = CGAL::object_cast<Arc_3>(&range)) {
-                        CGAL::intersection(*casted_range, opp_arc, back_inserter(restricted));
-                        if (restricted.size() > 1) {
-                            cout << "Something is very wrong!2" << endl;
-                        } else if (restricted.size() == 1) {
-                            range = restricted[0];
-                        } else {
-                            empty_range = true;
-                            break;
-                        }
-                    } else if (const pair<Arc_Point_3, unsigned>* casted_range_with_mult = CGAL::object_cast<pair<Arc_Point_3, unsigned> >(&range)) {
-                        if (!S().has_on_3_object()(opp_arc, casted_range_with_mult->first)) {
-                            empty_range = true;
-                            break;
-                        }
-                    } else {
-                        //
-                    }
+                    range.restrict_with_point(*selected[j]);
                 }
-                if (!empty_range) {
+                if (!range.is_empty()) {
                     escapable = true;
-                    break;
                 }
             }
             if (!escapable && (positives + i == k || negatives + i == k)) {
