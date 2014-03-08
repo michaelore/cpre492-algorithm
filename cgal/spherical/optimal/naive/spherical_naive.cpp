@@ -70,6 +70,7 @@ CGAL::Point_2<K> projection(Point_3 p3) {
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
+        cerr << "Usage: sphericalnaive <k> <filename>" << endl;
         return 1;
     }
     int k = atoi(argv[1]);
