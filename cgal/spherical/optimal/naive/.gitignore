@@ -13,8 +13,8 @@
 *.a
 
 # CMake files
-CMakeCache.txt
-CMakeFiles/*
-Makefile
-cmake_install.cmake
-spherical_naive
+build/CMakeCache.txt
+build/CMakeFiles/*
+build/Makefile
+build/cmake_install.cmake
+build/spherical_naive
