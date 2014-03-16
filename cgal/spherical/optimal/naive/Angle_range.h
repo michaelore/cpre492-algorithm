@@ -54,7 +54,7 @@ namespace CGAL {
 
     private:
         Circle_3 circle;
-        CGAL::Object range;
+        Object range;
         bool empty_range;
 
         Arc_3 get_opposing_arc(Circle_3 circle, Point_3 point) {
