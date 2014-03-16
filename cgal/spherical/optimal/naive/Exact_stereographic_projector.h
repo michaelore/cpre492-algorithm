@@ -1,12 +1,12 @@
 
-#ifndef STEREOGRAPHIC_PROJECTOR_H
-#define STEREOGRAPHIC_PROJECTOR_H
+#ifndef EAXCT_STEREOGRAPHIC_PROJECTOR_H
+#define EAXCT_STEREOGRAPHIC_PROJECTOR_H
 
 #include <CGAL/Object.h>
 
 namespace CGAL {
     template <class K>
-    class Stereographic_projector {
+    class Exact_stereographic_projector {
         typedef typename K::Point_2  Point_2;
         typedef typename K::Point_3  Point_3;
         typedef typename K::Line_3   Line_3;
@@ -14,7 +14,7 @@ namespace CGAL {
         typedef typename K::Sphere_3 Sphere_3;
 
     public:
-        Stereographic_projector(Sphere_3 &s, Point_3 &p) :
+        Exact_stereographic_projector(Sphere_3 &s, Point_3 &p) :
             sphere(s) {
                 antipodal = sphere.center()-(p-sphere.center());
                 plane = Plane_3(p, sphere.center()-p);
@@ -34,4 +34,4 @@ namespace CGAL {
         }
     };
 }
-#endif // STEREOGRAPHIC_PROJECTOR_H
+#endif // EAXCT_STEREOGRAPHIC_PROJECTOR_H

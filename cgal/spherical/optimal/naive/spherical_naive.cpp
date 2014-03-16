@@ -7,7 +7,7 @@
 #include <CGAL/Circular_arc_3.h>
 #include <CGAL/Combination_enumerator.h>
 
-#include "Stereographic_projector.h"
+#include "Exact_stereographic_projector.h"
 #include "Angle_range.h"
 
 #include <vector>
@@ -26,7 +26,7 @@ typedef CGAL::Sphere_3<S>            Sphere_3;
 typedef CGAL::Circle_3<S>            Circle_3;
 typedef CGAL::Circular_arc_3<S> Arc_3;
 typedef CGAL::Circular_arc_point_3<S> Arc_Point_3;
-typedef CGAL::Stereographic_projector<S> Stereo_Projector;
+typedef CGAL::Exact_stereographic_projector<S> Exact_Stereo_Projector;
 
 using namespace std;
 
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
         proj_point = cartesian(*it);
     }
     ifs.close();
-    Stereo_Projector stereo(UNIT_SPHERE, proj_point);
+    Exact_Stereo_Projector stereo(UNIT_SPHERE, proj_point);
 
     vector<vector<CGAL::Point_2<K> > > circlesets(coordinates.size());
     CGAL::Combination_enumerator<vector<Point_3>::iterator> set3(3, coordinates.begin(), coordinates.end());
