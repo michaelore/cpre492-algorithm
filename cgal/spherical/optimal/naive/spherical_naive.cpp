@@ -7,8 +7,8 @@
 #include <CGAL/Circular_arc_3.h>
 #include <CGAL/Combination_enumerator.h>
 
-#include <Stereographic_projector.h>
-#include <Angle_range.h>
+#include "Stereographic_projector.h"
+#include "Angle_range.h"
 
 #include <vector>
 #include <utility>
