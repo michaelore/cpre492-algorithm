@@ -8,13 +8,14 @@
 #include <CGAL/Combination_enumerator.h>
 
 #include "Exact_stereographic_projector.h"
+#include "Inexact_stereographic_projector.h"
 #include "Angle_range.h"
 
 #include <vector>
 #include <utility>
 #include <cmath>
 
-#define TAU 6.283185
+#define TAU 6.2831853071
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Exact_spherical_kernel_3 S;
