@@ -16,6 +16,7 @@
 #include <cmath>
 
 #define TAU 6.2831853071
+#define RADIUS 6371009
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Exact_spherical_kernel_3 S;
@@ -60,7 +61,7 @@ int main(int argc, char* argv[]) {
     }
     ifs.close();
     //Exact_Stereo_Projector stereo(UNIT_SPHERE, cartesian(proj_point));
-    Inexact_Stereo_Projector stereo(proj_point.x(), proj_point.y());
+    Inexact_Stereo_Projector stereo(proj_point.x(), proj_point.y(), RADIUS);
 
     vector<vector<CGAL::Point_2<K> > > circlesets(coordinates.size());
     CGAL::Combination_enumerator<vector<Point_3>::iterator> set3(3, coordinates.begin(), coordinates.end());
