@@ -29,8 +29,10 @@ namespace CGAL {
 
         Point_2 projection(Point_3 &p3) {
             Line_3 line(antipodal, p3);
-            Object projection = intersection(line, plane);
-            return plane.to_2d(object_cast<Point_3>(projection));
+            Object o_projection = intersection(line, plane);
+            Point_2 projection = plane.to_2d(object_cast<Point_3>(o_projection));
+            Point_2 adjusted(-projection.x(), -projection.y());
+            return adjusted;
         }
     };
 }
