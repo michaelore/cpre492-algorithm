@@ -28,6 +28,7 @@ typedef CGAL::Circle_3<S>            Circle_3;
 typedef CGAL::Circular_arc_3<S> Arc_3;
 typedef CGAL::Circular_arc_point_3<S> Arc_Point_3;
 typedef CGAL::Exact_stereographic_projector<S> Exact_Stereo_Projector;
+typedef CGAL::Inexact_stereographic_projector<K> Inexact_Stereo_Projector;
 
 using namespace std;
 
@@ -43,32 +44,6 @@ Point_3 cartesian(CGAL::Point_2<K> point2) {
     return result;
 }
 
-template <class P3>
-CGAL::Point_2<K> spherical(P3 p) {
-    double x = CGAL::to_double(p.x());
-    double y = CGAL::to_double(p.y());
-    double z = CGAL::to_double(p.z());
-    double r = sqrt(x*x+y*y+z*z);
-    double lon = atan2(y, x)*360/TAU;
-    double lat = acos(z/r)*360/TAU;
-    CGAL::Point_2<K> result(lat, lon);
-    return result;
-}
-
-CGAL::Point_2<K> projection(Point_3 p3) {
-    CGAL::Point_2<K> sphere_coord = spherical(p3);
-    double phi = sphere_coord.x()*TAU/360;
-    double lam = sphere_coord.y()*TAU/360;
-    double lam0 = 0;
-    double phi1 = 0;
-    double R = 1;
-    double k = 2*R/(1 + sin(phi1)*sin(phi)+cos(phi1)*cos(phi)*cos(lam-lam0));
-    double x = k*cos(phi)*sin(lam-lam0);
-    double y = k*(cos(phi1)*sin(phi)-sin(phi1)*cos(phi)*cos(lam-lam0));
-    CGAL::Point_2<K> result(x, y);
-    return result;
-}
-
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         cerr << "Usage: sphericalnaive <k> <filename>" << endl;
@@ -77,14 +52,15 @@ int main(int argc, char* argv[]) {
     int k = atoi(argv[1]);
     istream_iterator<CGAL::Point_2<K> > iend;
     vector<Point_3> coordinates;
-    Point_3 proj_point;
+    CGAL::Point_2<K> proj_point;
     ifstream ifs(argv[2], ifstream::in);
     for (istream_iterator<CGAL::Point_2<K> > it(ifs); it != iend; it++) {
         coordinates.push_back(cartesian(*it));
-        proj_point = cartesian(*it);
+        proj_point = *it;
     }
     ifs.close();
-    Exact_Stereo_Projector stereo(UNIT_SPHERE, proj_point);
+    //Exact_Stereo_Projector stereo(UNIT_SPHERE, cartesian(proj_point));
+    Inexact_Stereo_Projector stereo(proj_point.x(), proj_point.y());
 
     vector<vector<CGAL::Point_2<K> > > circlesets(coordinates.size());
     CGAL::Combination_enumerator<vector<Point_3>::iterator> set3(3, coordinates.begin(), coordinates.end());
@@ -118,14 +94,14 @@ int main(int argc, char* argv[]) {
                 }
             }
             if (!escapable && (positives + i == k || negatives + i == k)) {
-                CGAL::Point_2<S> points2[3];
+                CGAL::Point_2<K> points2[3];
                 points2[0] = stereo(*set3[0]);
                 points2[1] = stereo(*set3[1]);
                 points2[2] = stereo(*set3[2]);
                 for (int i = 0; i < 3; i++) {
                     cout << CGAL::to_double(points2[i].x()) << "\t" << CGAL::to_double(points2[i].y()) << "\t";
                 }
-                CGAL::Circle_2<S> circle(points2[0], points2[1], points2[2]);
+                CGAL::Circle_2<K> circle(points2[0], points2[1], points2[2]);
                 cout << CGAL::to_double(circle.center().x()) << "\t" << CGAL::to_double(circle.center().y()) << "\t";
                 cout << sqrt(CGAL::to_double((circle.center()-points2[0]).squared_length()));
                 cout << endl;
