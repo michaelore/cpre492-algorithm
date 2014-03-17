@@ -41,8 +41,18 @@ namespace CGAL {
             available_sets = restricted;
         }
 
-        bool is_empty() {
+        bool empty() {
             return available_sets.empty();
+        }
+
+        bool almost_empty() {
+            std::pair<Arc_Point_3, unsigned> app;
+            for (int i = 0; i < available_sets.size(); i++) {
+                if (!assign(app, available_sets[i])) {
+                    return false;
+                }
+            }
+            return true;
         }
 
     private:
