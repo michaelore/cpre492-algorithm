@@ -29,12 +29,24 @@ using namespace CGAL;
 Sphere_3<S> UNIT_SPHERE(ORIGIN, 1);
 
 Point_3<S> cartesian(Point_2<K> point2) {
-    K::FT lat = point2.x()*TAU/360;
+    K::FT colat = (90-point2.x())*TAU/360;
     K::FT lon = point2.y()*TAU/360;
-    K::FT x = cos(lon)*sin(lat);
-    K::FT y = sin(lon)*sin(lat);
-    K::FT z = cos(lat);
+    K::FT x = cos(lon)*sin(colat);
+    K::FT y = sin(lon)*sin(colat);
+    K::FT z = cos(colat);
     Point_3<S> result(x, y, z);
+    return result;
+}
+
+template <class P3>
+Point_2<K> spherical(P3 &p) {
+    double x = CGAL::to_double(p.x());
+    double y = CGAL::to_double(p.y());
+    double z = CGAL::to_double(p.z());
+    double r = sqrt(x*x+y*y+z*z);
+    double lon = atan2(y, x)*360/TAU;
+    double lat = 90-(acos(z/r)*360/TAU);
+    Point_2<K> result(lat, lon);
     return result;
 }
 

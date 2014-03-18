@@ -32,7 +32,7 @@ namespace CGAL {
             double phi = sphere_coord.x()*TAU/360;
             double lam = sphere_coord.y()*TAU/360;
             double k = 2*R/(1 + sin(phi1)*sin(phi)+cos(phi1)*cos(phi)*cos(lam-lam0));
-            double x = k*cos(phi)*sin(lam-lam0)/2;
+            double x = k*cos(phi)*sin(lam-lam0);
             double y = k*(cos(phi1)*sin(phi)-sin(phi1)*cos(phi)*cos(lam-lam0));
             Point_2 result(x, y);
             return result;
@@ -45,7 +45,7 @@ namespace CGAL {
             double z = CGAL::to_double(p.z());
             double r = sqrt(x*x+y*y+z*z);
             double lon = atan2(y, x)*360/TAU;
-            double lat = acos(z/r)*360/TAU;
+            double lat = 90-(acos(z/r)*360/TAU);
             Point_2 result(lat, lon);
             return result;
         }
