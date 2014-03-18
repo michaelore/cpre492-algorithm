@@ -151,5 +151,86 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
+    Combination_enumerator<std::vector<Point_3<S> >::iterator> set2(2, coordinates.begin(), coordinates.end());
+    for (; !set2.finished(); set2++) {
+        Line_3<S> line(*set2[0], *set2[1]);
+        Point_3<S> proj = line.projection(ORIGIN);
+        Plane_3<S> divide(proj, proj-ORIGIN);
+        Plane_3<E> e_divide(E::FT(divide.a()), E::FT(divide.b()), E::FT(divide.c()), E::FT(divide.d()));
+        bool center_positive = divide.has_on_positive_side(ORIGIN);
+        Sphere_3<S> smallest_sphere(*set2[0], *set2[1]);
+        Circle_3<S> circle(smallest_sphere, divide);
+        int positives = 0;
+        int negatives = 0;
+        std::vector<Point_3<S> > zeroes;
+        for (int i = 0; i < coordinates.size(); i++) {
+            Point_3<S> p = coordinates[i];
+            if (divide.has_on_positive_side(p)) {
+                positives++;
+            } else if (divide.has_on_negative_side(p)) {
+                negatives++;
+            } else {
+                zeroes.push_back(p);
+            }
+        }
+        for (int i = 0; i < zeroes.size(); i++) {
+            int retain = zeroes.size()-i;
+            bool escapable = false;
+            Combination_enumerator<std::vector<Point_3<S> >::iterator> selected(retain, zeroes.begin(), zeroes.end());
+            for (; !selected.finished(); selected++) {
+                Angle_range<S> range(circle);
+                for (int j = 0; j < retain; j++) {
+                    range.restrict_with_point(*selected[j]);
+                }
+                if (!range.almost_empty()) {
+                    escapable = true;
+                }
+            }
+            if (escapable) {
+                continue;
+            }
+            std::vector<Object> centers;
+            Plane_3<S> bisect = bisecting_plane(*set2[0], *set2[1]);
+            Plane_3<S> orth(*set2[0], *set2[1], ORIGIN);
+            intersection(UNIT_SPHERE, bisect, orth, back_inserter(centers));
+            Point_3<E> pos_center;
+            Point_3<E> neg_center;
+            for (int j = 0; j < centers.size(); j++) {
+                std::pair<Circular_arc_point_3<S>, unsigned> app;
+                assign(app, centers[j]);
+                Point_3<E> center(E::FT(app.first.x()), E::FT(app.first.y()), E::FT(app.first.z()));
+                if (e_divide.has_on_positive_side(center)) {
+                    pos_center = center;
+                } else if (e_divide.has_on_negative_side(center)) {
+                    neg_center = center;
+                } else {
+                    //
+                }
+            }
+            if (center_positive && positives + i == k) {
+                Point_2<K> points2[2];
+                points2[0] = stereo(*set2[0]);
+                points2[1] = stereo(*set2[1]);
+                Circle_2<K> circle(points2[0], points2[1]);
+                Point_2<K> true_center = stereo(pos_center);
+                std::cout << to_double(true_center.x()) << "\t" << to_double(true_center.y()) << "\t";
+                std::cout << to_double(circle.center().x()) << "\t" << to_double(circle.center().y()) << "\t";
+                std::cout << sqrt(to_double((circle.center()-points2[0]).squared_length()));
+                std::cout << std::endl;
+            }
+            if (!center_positive && negatives + i == k) {
+                Point_2<K> points2[2];
+                points2[0] = stereo(*set2[0]);
+                points2[1] = stereo(*set2[1]);
+                Circle_2<K> circle(points2[0], points2[1]);
+                Point_2<K> true_center = stereo(neg_center);
+                std::cout << to_double(true_center.x()) << "\t" << to_double(true_center.y()) << "\t";
+                std::cout << to_double(circle.center().x()) << "\t" << to_double(circle.center().y()) << "\t";
+                std::cout << sqrt(to_double((circle.center()-points2[0]).squared_length()));
+                std::cout << std::endl;
+            }
+        }
+    }
     return 0;
 }
