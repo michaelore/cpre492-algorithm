@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript
 require(plotrix)
 
+x11()
+
 args = commandArgs(trailingOnly = TRUE)
 
 tau = 6.283185
@@ -39,6 +41,7 @@ plot(circledata$V1, circledata$V2, xlim=c(xlow, xhig), ylim=c(ylow, yhig),  pch=
 par(new=T)
 plot(circledata$V3, circledata$V4, xlim=c(xlow, xhig), ylim=c(ylow, yhig),  pch=19, cex=0.4, col="blue", asp=1)
 par(new=T)
+
 for (i in 1:length(circledata$V5)) {
     draw.circle(circledata$V3[i], circledata$V4[i], circledata$V5[i])
 }
