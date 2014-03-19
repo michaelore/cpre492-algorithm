@@ -51,15 +51,16 @@ bool compare_distances(Solution<S> a, Solution<S> b) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: sphericalnaive <k> <filename>" << std::endl;
+    if (argc != 4) {
+        std::cerr << "Usage: sphericalnaive <k> <n> <filename>" << std::endl;
         return 1;
     }
     int k = atoi(argv[1]);
+    int ncircs = atoi(argv[2]);
     std::istream_iterator<Point_2<K> > iend;
     std::vector<Point_3<S> > coordinates;
     Point_2<K> proj_point;
-    std::ifstream ifs(argv[2], std::ifstream::in);
+    std::ifstream ifs(argv[3], std::ifstream::in);
     for (std::istream_iterator<Point_2<K> > it(ifs); it != iend; it++) {
         coordinates.push_back(cartesian(*it));
         proj_point = *it;
@@ -208,7 +209,9 @@ int main(int argc, char* argv[]) {
     }
 
     std::sort(solution_set.begin(), solution_set.end(), compare_distances);
-    for (int i = 0; i < solution_set.size(); i++) {
+    int nsolutions = solution_set.size();
+    int limit = std::min(nsolutions, ncircs);
+    for (int i = 0; i < limit; i++) {
         #ifdef USE_STEREOGRAPHIC
         solution_set[i].project_and_display(stereo);
         #else
