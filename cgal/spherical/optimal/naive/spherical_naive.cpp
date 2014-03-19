@@ -10,6 +10,7 @@
 #include "Exact_stereographic_projector.h"
 #include "Inexact_stereographic_projector.h"
 #include "Angle_range.h"
+#include "Solution.h"
 
 #include <vector>
 #include <utility>
@@ -18,7 +19,7 @@
 #define TAU 6.2831853071
 #define RADIUS 6371009
 
-#define USE_STEREOGRAPHIC
+//#define USE_STEREOGRAPHIC
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Exact_spherical_kernel_3 S;
@@ -40,47 +41,13 @@ Point_3<S> cartesian(Point_2<K> point2) {
     return result;
 }
 
-template <class P3>
-Point_2<K> spherical(P3 &p) {
-    double x = CGAL::to_double(p.x());
-    double y = CGAL::to_double(p.y());
-    double z = CGAL::to_double(p.z());
-    double r = sqrt(x*x+y*y+z*z);
-    double lon = atan2(y, x)*360/TAU;
-    double lat = 90-(acos(z/r)*360/TAU);
-    Point_2<K> result(lat, lon);
-    return result;
-}
-
-template <class P3, class P3E>
-void project_and_display(P3E center, P3 p1, P3 p2, P3 p3) {
-    Point_2<K> points2[3];
-    points2[0] = spherical(p1);
-    points2[1] = spherical(p2);
-    points2[2] = spherical(p3);
-    Point_2<K> true_center = spherical(center);
-    std::cout << to_double(true_center.x()) << "\t" << to_double(true_center.y()) << "\t";
-    std::cout << to_double(points2[0].x()) << "\t" << to_double(points2[0].y()) << "\t";
-    std::cout << to_double(points2[1].x()) << "\t" << to_double(points2[1].y()) << "\t";
-    std::cout << to_double(points2[2].x()) << "\t" << to_double(points2[2].y()) << "\t";
-    std::cout << std::endl;
-}
-
-template <class P3, class P3E>
-void project_and_display(P3E center, P3 p1, P3 p2) {
-    Point_2<K> points2[2];
-    points2[0] = spherical(p1);
-    points2[1] = spherical(p2);
-    Point_2<K> true_center = spherical(center);
-    std::cout << to_double(true_center.x()) << "\t" << to_double(true_center.y()) << "\t";
-    std::cout << to_double(points2[0].x()) << "\t" << to_double(points2[0].y()) << "\t";
-    std::cout << to_double(points2[1].x()) << "\t" << to_double(points2[1].y()) << "\t";
-    std::cout << std::endl;
-}
-
 Plane_3<S> bisecting_plane(Point_3<S> p1, Point_3<S> p2) {
     Plane_3<S> result(midpoint(p1, p2), p2-p1);
     return result;
+}
+
+bool compare_distances(Solution<S> a, Solution<S> b) {
+    return a.sq_dist() > b.sq_dist();
 }
 
 int main(int argc, char* argv[]) {
@@ -100,6 +67,8 @@ int main(int argc, char* argv[]) {
     ifs.close();
     //Exact_Stereo_Projector stereo(UNIT_SPHERE, cartesian(proj_point));
     Inexact_Stereo_Projector stereo(proj_point.x(), proj_point.y(), RADIUS);
+
+    std::vector<Solution<S> > solution_set;
 
     Combination_enumerator<std::vector<Point_3<S> >::iterator> set3(3, coordinates.begin(), coordinates.end());
     for (; !set3.finished(); set3++) {
@@ -153,19 +122,17 @@ int main(int argc, char* argv[]) {
                     //
                 }
             }
+            std::vector<Point_3<S> > points;
+            points.push_back(*set3[0]);
+            points.push_back(*set3[1]);
+            points.push_back(*set3[2]);
             if (positives + i == k) {
-                #ifdef USE_STEREOGRAPHIC
-                stereo.project_and_display(pos_center, *set3[0], *set3[1], *set3[2]);
-                #else
-                project_and_display(pos_center, *set3[0], *set3[1], *set3[2]);
-                #endif
+                Solution<S> sol(circle, pos_center, points);
+                solution_set.push_back(sol);
             }
             if (negatives + i == k) {
-                #ifdef USE_STEREOGRAPHIC
-                stereo.project_and_display(neg_center, *set3[0], *set3[1], *set3[2]);
-                #else
-                project_and_display(neg_center, *set3[0], *set3[1], *set3[2]);
-                #endif
+                Solution<S> sol(circle, neg_center, points);
+                solution_set.push_back(sol);
             }
         }
     }
@@ -226,21 +193,27 @@ int main(int argc, char* argv[]) {
                     //
                 }
             }
+            std::vector<Point_3<S> > points;
+            points.push_back(*set2[0]);
+            points.push_back(*set2[1]);
             if (center_positive && positives + i == k) {
-                #ifdef USE_STEREOGRAPHIC
-                stereo.project_and_display(pos_center, *set2[0], *set2[1]);
-                #else
-                project_and_display(pos_center, *set2[0], *set2[1]);
-                #endif
+                Solution<S> sol(circle, pos_center, points);
+                solution_set.push_back(sol);
             }
             if (!center_positive && negatives + i == k) {
-                #ifdef USE_STEREOGRAPHIC
-                stereo.project_and_display(neg_center, *set2[0], *set2[1]);
-                #else
-                project_and_display(neg_center, *set2[0], *set2[1]);
-                #endif
+                Solution<S> sol(circle, neg_center, points);
+                solution_set.push_back(sol);
             }
         }
+    }
+
+    std::sort(solution_set.begin(), solution_set.end(), compare_distances);
+    for (int i = 0; i < solution_set.size(); i++) {
+        #ifdef USE_STEREOGRAPHIC
+        solution_set[i].project_and_display(stereo);
+        #else
+        solution_set[i].project_and_display();
+        #endif
     }
     return 0;
 }
