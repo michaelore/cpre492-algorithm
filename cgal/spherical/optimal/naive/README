@@ -1,0 +1,22 @@
+Finds all local-maximum k-circles (slightly different definition than in our design document, see below), without any location constraint, modeling the Earth as a sphere. This code is designed to be simple, and use exact CGAL methods. As a result, the runtime is O(n^4).
+
+It is intended to be used as a test approximate algorihtms, and as a placeholder to be used by the others on our team.
+
+It can be run on the command line or through system calls as:
+
+UNIX: ./spherical_naive <k> <n> <filename>
+ DOS: spherical_naive.exe <k> <n> <filename>
+
+Where "k" is the maximum number of points allowed inside the circle (e.g. 0 to find empty circles), "n" is the desired number of circles in the output (there may be fewer), and "filename" is the path to the input data.
+
+The input is expected to have the same form as the sample data from Gordon; one coordinate per line, of the form:
+<latitude>\t<longitude>
+Where "\t" represents a tab character.
+
+The output has one circular region per line. The circle is represented as a tab separated set of 3-4 coordinates. The 1st coordinate is the center of the circle, and the remaining 2-3 coordinates are on the circle's boundary. 
+
+The boundary-points are taken from the input data. If there are 2 points, then the boundary circle is the smallest circle connecting them. If there are 3 points, the the boundary circle is the only circle connecting them.
+
+The center point indicates which side of the boundary circle is the interior. The center may be on the other side of the globe from the boundary points, and this is allowed because there is no location constraint.
+
+The output is sorted by the area of the corresponding circular regions, in descending order.
