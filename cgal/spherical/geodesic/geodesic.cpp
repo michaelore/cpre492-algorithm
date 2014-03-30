@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
         n = 1;
     }
 
-    Subdivision_method_3::CatmullClark_subdivision(P, n);
+    Subdivision_method_3::Loop_subdivision(P, n);
 
     std::cout << P;
     return 0;
