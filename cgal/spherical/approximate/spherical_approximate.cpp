@@ -7,6 +7,7 @@
 #include <CGAL/aff_transformation_tags.h>
 #include <CGAL/number_utils.h>
 #include <CGAL/circulator.h>
+#include <CGAL/Kd_tree.h>
 #include <CGAL/IO/Polyhedron_iostream.h>
 #include "Angle_well.h"
 #include "Inexact_stereographic_projector.h"
@@ -64,9 +65,17 @@ inline double clmp(double val) {
 }
 
 double dist_convert(double c) {
-    double r = RADIUS;
-    double s = r*acos(clmp(1-c*c/(2*r)));
-    return s;
+    double s = acos(clmp(1-c*c));
+    return RADIUS*s;
+}
+
+Vector normalize(Vector v) {
+    return sqrt(1/v.squared_length())*v;
+}
+
+Point_3<K> normalize(Point_3<K> p) {
+    Vector v = p-ORIGIN;
+    return ORIGIN+normalize(v);
 }
 
 int main(int argc, char *argv[]) {
@@ -92,13 +101,12 @@ int main(int argc, char *argv[]) {
     polygon_reader >> P;
     polygon_reader.close();
 
-    Scaling tag;
-    Transform_3 normalizer(tag, 1/sqrt((*P.points_begin()-ORIGIN).squared_length()));
-    std::transform(P.points_begin(), P.points_end(), P.points_begin(), normalizer);
-
     Subdivision_method_3::Loop_subdivision(P, nrefines);
 
+    std::transform(P.points_begin(), P.points_end(), P.points_begin(), (Point_3<K>(*)(Point_3<K>))normalize);
+
     for (Vertex_iterator v_iter = P.vertices_begin(); v_iter != P.vertices_end(); v_iter++) {
+        //std::cerr << (v_iter->point()-ORIGIN).squared_length() << std::endl;
         Halfedge_container h_cont(v_iter->vertex_begin());
         K::FT max_dist = 0;
         //std::cerr << "Vertex:" << std::endl;
@@ -106,7 +114,7 @@ int main(int argc, char *argv[]) {
             Point_3<K> p1 = h_iter->vertex()->point();
             Point_3<K> p2 = h_iter->next()->vertex()->point();
             Point_3<K> p3 = h_iter->next()->next()->vertex()->point();
-            Point_3<K> circ_center = circumcenter(p1, p2, p3);
+            Point_3<K> circ_center = normalize(circumcenter(p1, p2, p3));
             K::FT dist = sqrt((v_iter->point()-circ_center).squared_length());
             max_dist = std::max(max_dist, dist);
             //std::cerr << "  dist: " << dist << std::endl;
@@ -147,12 +155,10 @@ int main(int argc, char *argv[]) {
             std::vector<double> angles;
             Vector reference(1, 0, 0);
             Plane primary(v_iter->point(), border[0], ORIGIN);
-            Vector prim_orthog = primary.orthogonal_vector();
-            prim_orthog = sqrt(1/prim_orthog.squared_length())*prim_orthog;
+            Vector prim_orthog = normalize(primary.orthogonal_vector());
             for (int i = 0; i < border.size(); i++) {
                 Plane secondary(v_iter->point(), border[i], ORIGIN);
-                Vector sec_orthog = secondary.orthogonal_vector();
-                sec_orthog = sqrt(1/sec_orthog.squared_length())*sec_orthog;
+                Vector sec_orthog = normalize(secondary.orthogonal_vector());
                 Vector cross = cross_product(prim_orthog, sec_orthog);
                 double angle = acos(clmp(to_double(prim_orthog*sec_orthog)));
                 if (reference*cross < 0) {
