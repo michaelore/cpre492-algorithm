@@ -109,6 +109,7 @@ int main(int argc, char *argv[]) {
         //std::cerr << (v_iter->point()-ORIGIN).squared_length() << std::endl;
         Halfedge_container h_cont(v_iter->vertex_begin());
         K::FT max_dist = 0;
+        Point_3<K> max_center;
         //std::cerr << "Vertex:" << std::endl;
         for (Halfedge_iterator h_iter = h_cont.begin(); h_iter != h_cont.end(); h_iter++) {
             Point_3<K> p1 = h_iter->vertex()->point();
@@ -116,6 +117,9 @@ int main(int argc, char *argv[]) {
             Point_3<K> p3 = h_iter->next()->next()->vertex()->point();
             Point_3<K> circ_center = normalize(circumcenter(p1, p2, p3));
             K::FT dist = sqrt((v_iter->point()-circ_center).squared_length());
+            if (max_dist < dist) {
+                max_center = circ_center;
+            }
             max_dist = std::max(max_dist, dist);
             //std::cerr << "  dist: " << dist << std::endl;
         }
@@ -173,7 +177,15 @@ int main(int argc, char *argv[]) {
             }
             long remov = Angle_well::removability(angles);
             if (remov) {
-                std::cout << border.size() << "\t" << remov << "\t" << k1_dist << "\t" << dist_convert(k1_dist) << std::endl;
+                //std::cout << border.size() << "\t" << remov << "\t" << k1_dist << "\t" << dist_convert(k1_dist) << std::endl;
+                Point_2<K> circle_center = stereo(v_iter->point());
+                Point_2<K> k1_proj = stereo(near_neighbors[(k+1)-1].first);
+                K::FT rad = sqrt((circle_center-k1_proj).squared_length());
+                std::cout << circle_center.x() << "\t" << circle_center.y() << "\t";
+                std::cout << circle_center.x() << "\t" << circle_center.y() << "\t";
+                std::cout << rad << "\t";
+                std::cout << sqrt((circle_center-stereo(max_center)).squared_length());
+                std::cout << std::endl;
             }
         }
     }
