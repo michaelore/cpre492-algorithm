@@ -42,9 +42,10 @@ namespace CGAL {
             for (std::map<double, std::pair<long, long> >::iterator it=angles.begin(); it!=angles.end(); it++) {
                 cumsum -= it->second.first;
                 minval = std::min(minval, cumsum);
-                //std::cout << cumsum << std::endl;
+                //std::cout << cumsum << " ";
                 cumsum += it->second.second;
             }
+            //std::cout << std::endl;
             return minval;
         }
 

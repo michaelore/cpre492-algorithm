@@ -18,7 +18,7 @@ namespace CGAL {
         }
 
         template <class P3>
-        Point_2<K> operator()(P3 &p3) { return projection(p3); }
+        Point_2<K> operator()(const P3 &p3) { return projection(p3); }
 
     private:
         double phi1;
@@ -26,7 +26,7 @@ namespace CGAL {
         double R;
 
         template <class P3>
-        Point_2<K> projection(P3 &p3) {
+        Point_2<K> projection(const P3 &p3) {
             Point_2<K> sphere_coord = spherical(p3);
             double phi = sphere_coord.x()*TAU/360;
             double lam = sphere_coord.y()*TAU/360;
@@ -38,7 +38,7 @@ namespace CGAL {
         }
 
         template <class P3>
-        Point_2<K> spherical(P3 &p) {
+        Point_2<K> spherical(const P3 &p) {
             double x = to_double(p.x());
             double y = to_double(p.y());
             double z = to_double(p.z());

@@ -64,18 +64,27 @@ inline double clmp(double val) {
     }
 }
 
-double dist_convert(double c) {
-    double s = acos(clmp(1-c*c));
+double dist_convert(double c2) {
+    double s = acos(clmp(1-c2/2));
     return RADIUS*s;
 }
 
-Vector normalize(Vector v) {
+Vector normalize(const Vector &v) {
     return sqrt(1/v.squared_length())*v;
 }
 
-Point_3<K> normalize(Point_3<K> p) {
+Point_3<K> normalize(const Point_3<K> &p) {
     Vector v = p-ORIGIN;
     return ORIGIN+normalize(v);
+}
+
+Vector reverse(const Vector &v) {
+    return -v;
+}
+
+Point_3<K> reverse(const Point_3<K> &p) {
+    Vector v = p-ORIGIN;
+    return ORIGIN+reverse(v);
 }
 
 int main(int argc, char *argv[]) {
@@ -103,7 +112,7 @@ int main(int argc, char *argv[]) {
 
     Subdivision_method_3::Loop_subdivision(P, nrefines);
 
-    std::transform(P.points_begin(), P.points_end(), P.points_begin(), (Point_3<K>(*)(Point_3<K>))normalize);
+    std::transform(P.points_begin(), P.points_end(), P.points_begin(), (Point_3<K>(*)(const Point_3<K>&))normalize);
 
     for (Vertex_iterator v_iter = P.vertices_begin(); v_iter != P.vertices_end(); v_iter++) {
         //std::cerr << (v_iter->point()-ORIGIN).squared_length() << std::endl;
@@ -116,7 +125,7 @@ int main(int argc, char *argv[]) {
             Point_3<K> p2 = h_iter->next()->vertex()->point();
             Point_3<K> p3 = h_iter->next()->next()->vertex()->point();
             Point_3<K> circ_center = normalize(circumcenter(p1, p2, p3));
-            K::FT dist = sqrt((v_iter->point()-circ_center).squared_length());
+            K::FT dist = dist_convert((v_iter->point()-circ_center).squared_length());
             if (max_dist < dist) {
                 max_center = circ_center;
             }
@@ -129,11 +138,12 @@ int main(int argc, char *argv[]) {
         int i = 0;
         NN_iterator it = NN.begin();
         for (; i < k+1 && it != NN.end(); i++, it++) {
-            near_neighbors.push_back(std::make_pair(it->first, sqrt(it->second)));
+            near_neighbors.push_back(std::make_pair(it->first, dist_convert(it->second)));
         }
         if (i < k+1) {
             //
         } else {
+            Point_3<K> k1_point = near_neighbors[(k+1)-1].first;
             K::FT k1_dist = near_neighbors[(k+1)-1].second;
             K::FT k1_min_rad = k1_dist-max_dist;
             K::FT k1_max_rad = k1_dist+max_dist;
@@ -145,9 +155,10 @@ int main(int argc, char *argv[]) {
                     border.push_back(near_neighbors[j-1].first);
                 }
             }
-            border.push_back(near_neighbors[(k+1)-1].first);
+            int extra_on_border = border.size();
+            border.push_back(k1_point);
             for (; it != NN.end(); i++, it++) {
-                K::FT it_dist = sqrt(it->second);
+                K::FT it_dist = dist_convert(it->second);
                 K::FT it_min_rad = it_dist-max_dist;
                 if (it_min_rad <= k1_max_rad) {
                     border.push_back(it->first);
@@ -157,14 +168,13 @@ int main(int argc, char *argv[]) {
             }
             //std::cerr << "  border.size(): " << border.size() << std::endl;
             std::vector<double> angles;
-            Vector reference(1, 0, 0);
-            Plane primary(v_iter->point(), border[0], ORIGIN);
-            Vector prim_orthog = normalize(primary.orthogonal_vector());
+            Vector reference = v_iter->point()-ORIGIN;
+            Plane tangent(v_iter->point(), reference);
+            Vector primary = v_iter->point()-tangent.projection(border[0]);
             for (int i = 0; i < border.size(); i++) {
-                Plane secondary(v_iter->point(), border[i], ORIGIN);
-                Vector sec_orthog = normalize(secondary.orthogonal_vector());
-                Vector cross = cross_product(prim_orthog, sec_orthog);
-                double angle = acos(clmp(to_double(prim_orthog*sec_orthog)));
+                Vector secondary = v_iter->point()-tangent.projection(border[i]);
+                Vector cross = cross_product(primary, secondary);
+                double angle = acos(clmp(to_double(primary*secondary)));
                 if (reference*cross < 0) {
                     angle *= -1;
                 }
@@ -176,15 +186,22 @@ int main(int argc, char *argv[]) {
                 //std::cout << angle << std::endl;
             }
             long remov = Angle_well::removability(angles);
-            if (remov) {
-                //std::cout << border.size() << "\t" << remov << "\t" << k1_dist << "\t" << dist_convert(k1_dist) << std::endl;
-                Point_2<K> circle_center = stereo(v_iter->point());
-                Point_2<K> k1_proj = stereo(near_neighbors[(k+1)-1].first);
+            if (remov > extra_on_border) {
+                //std::cout << border.size() << "\t" << remov << "\t" << k1_dist << std::endl;
+                Point_3<K> infinity = reverse(cartesian(proj_point));
+                Point_2<K> true_center = stereo(v_iter->point());
+                Point_2<K> circle_center;
+                if ((v_iter->point()-infinity).squared_length() < (v_iter->point()-near_neighbors[(k+1)-1].first).squared_length()) {
+                    circle_center = stereo(reverse(v_iter->point()));
+                } else {
+                    circle_center = true_center;
+                }
+                Point_2<K> k1_proj = stereo(k1_point);
                 K::FT rad = sqrt((circle_center-k1_proj).squared_length());
-                std::cout << circle_center.x() << "\t" << circle_center.y() << "\t";
+                std::cout << true_center.x() << "\t" << true_center.y() << "\t";
                 std::cout << circle_center.x() << "\t" << circle_center.y() << "\t";
                 std::cout << rad << "\t";
-                std::cout << sqrt((circle_center-stereo(max_center)).squared_length());
+                std::cout << sqrt((true_center-stereo(max_center)).squared_length());
                 std::cout << std::endl;
             }
         }
