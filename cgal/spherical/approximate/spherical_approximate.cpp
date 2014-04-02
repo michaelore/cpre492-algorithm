@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
         } else {
             Point_3<K> k1_point = near_neighbors[(k+1)-1].first;
             K::FT k1_dist = near_neighbors[(k+1)-1].second;
-            K::FT k1_min_rad = k1_dist-max_dist;
+            K::FT k1_min_rad = min(abs(k1_dist-max_dist), k1_dist);
             K::FT k1_max_rad = k1_dist+max_dist;
             std::vector<Point_3<K> > border;
             for (int j = 1; j <= k; j++) {
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
             border.push_back(k1_point);
             for (; it != NN.end(); i++, it++) {
                 K::FT it_dist = dist_convert(it->second);
-                K::FT it_min_rad = it_dist-max_dist;
+                K::FT it_min_rad = min(abs(it_dist-max_dist), it_dist);
                 if (it_min_rad <= k1_max_rad) {
                     border.push_back(it->first);
                 } else {
@@ -170,10 +170,11 @@ int main(int argc, char *argv[]) {
             std::vector<double> angles;
             Vector reference = v_iter->point()-ORIGIN;
             Plane tangent(v_iter->point(), reference);
-            Vector primary = v_iter->point()-tangent.projection(border[0]);
+            Vector primary = normalize(v_iter->point()-tangent.projection(border[0]));
             for (int i = 0; i < border.size(); i++) {
-                Vector secondary = v_iter->point()-tangent.projection(border[i]);
+                Vector secondary = normalize(v_iter->point()-tangent.projection(border[i]));
                 Vector cross = cross_product(primary, secondary);
+                //std::cerr << to_double(primary*secondary) << std::endl;
                 double angle = acos(clmp(to_double(primary*secondary)));
                 if (reference*cross < 0) {
                     angle *= -1;
