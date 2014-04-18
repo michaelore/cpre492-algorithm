@@ -3,20 +3,14 @@
 
 #include <CGAL/Combination_enumerator.h>
 
-#include "Solution.h"
+#include "KCircle.h"
 #include "Utility.h"
 
 #include <vector>
 #include <utility>
 #include <cmath>
 
-//#define USE_STEREOGRAPHIC
-
 using namespace CGAL;
-
-bool compare_radii(Solution a, Solution b) {
-    return a.rad > b.rad;
-}
 
 class Exact_max {
 private:
@@ -28,7 +22,7 @@ private:
     std::ostream *error;
 
     std::vector<Point_3<K> > coordinates;
-    std::vector<Solution> solutions;
+    std::vector<KCircle> kcircles;
     Point_2<K> proj_point;
 public:
     Exact_max(int pk, int pncircs, int pnrefines, std::istream &pinput, std::ostream &poutput, std::ostream &perror) :
@@ -82,18 +76,18 @@ public:
                 }
             }
             if (positives == k) {
-                Solution pos_sol(pos_center, great_circle_dist(pos_center, *set3[0]), EPS);
-                solutions.push_back(pos_sol);
+                KCircle pos_sol(pos_center, great_circle_dist(pos_center, *set3[0]), EPSILON);
+                kcircles.push_back(pos_sol);
             }
             if (negatives == k) {
-                Solution neg_sol(neg_center, great_circle_dist(neg_center, *set3[0]), EPS);
-                solutions.push_back(neg_sol);
+                KCircle neg_sol(neg_center, great_circle_dist(neg_center, *set3[0]), EPSILON);
+                kcircles.push_back(neg_sol);
             }
         }
         Combination_enumerator<std::vector<Point_3<K> >::iterator> set2(2, coordinates.begin(), coordinates.end());
         for (; !set2.finished(); set2++) {
             Point_3<K> mid = midpoint(*set2[0], *set2[1]);
-            if ((mid-ORIGIN).squared_length() < EPS) {
+            if ((mid-ORIGIN).squared_length() < EPSILON) {
                 *error << "WARNING: Skipping combination of 2 because they are ~antipodal" << std::endl;
             }
             Plane_3<K> divide(*set3[0], mid-ORIGIN);
@@ -124,23 +118,19 @@ public:
                 }
             }
             if (positives == k) {
-                Solution pos_sol(pos_center, great_circle_dist(pos_center, *set2[0]), EPS);
-                solutions.push_back(pos_sol);
+                KCircle pos_sol(pos_center, great_circle_dist(pos_center, *set2[0]), EPSILON);
+                kcircles.push_back(pos_sol);
             }
             if (negatives == k) {
-                Solution neg_sol(neg_center, great_circle_dist(neg_center, *set2[0]), EPS);
-                solutions.push_back(neg_sol);
+                KCircle neg_sol(neg_center, great_circle_dist(neg_center, *set2[0]), EPSILON);
+                kcircles.push_back(neg_sol);
             }
         }
-        std::sort(solutions.begin(), solutions.end(), compare_radii);
-        int nsolutions = solutions.size();
-        int limit = std::min(nsolutions, ncircs);
+        std::sort(kcircles.begin(), kcircles.end(), KCircle::compare_radii);
+        int nkcircles = kcircles.size();
+        int limit = std::min(nkcircles, ncircs);
         for (int i = 0; i < limit; i++) {
-            #ifdef USE_STEREOGRAPHIC
-            //solutions[i].project_and_display(stereo);
-            #else
-            solutions[i].project_and_display(*output);
-            #endif
+            kcircles[i].project_and_display(*output);
         }
     }
 };

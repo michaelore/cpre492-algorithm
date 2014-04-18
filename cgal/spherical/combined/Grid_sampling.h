@@ -7,7 +7,7 @@
 #include <CGAL/circulator.h>
 #include <CGAL/Kd_tree.h>
 #include <CGAL/IO/Polyhedron_iostream.h>
-#include "Angle_well.h"
+#include "KCircle.h"
 #include "Utility.h"
 
 #include <algorithm>
@@ -15,8 +15,6 @@
 #include <fstream>
 #include <iostream>
 #include <utility>
-
-//#define USE_STEREOGRAPHIC
 
 using namespace CGAL;
 
@@ -35,14 +33,13 @@ class Grid_sampling {
 private:
     int k;
     int ncircs;
-    int nrefines;
     std::istream *input;
     std::ostream *output;
     std::ostream *error;
 
     Tree tree;
     Point_2<K> proj_point;
-    Polyhedron_3<K> geodesic_grid;
+    std::vector<KCircle> kcircles;
 
     double distance_func(Point_3<K> p) {
         NN_search NN(tree, p);
@@ -58,9 +55,13 @@ private:
         return k1_dist;
     }
 
+    void calc_kcircle_radius(KCircle &kcirc) {
+        kcirc.rad = distance_func(kcirc.center);
+    }
+
 public:
-    Grid_sampling(int pk, int pncircs, int pnrefines, std::istream &pinput, std::ostream &poutput, std::ostream &perror) :
-            k(pk), ncircs(pncircs), nrefines(pnrefines) {
+    Grid_sampling(int pk, int pncircs, std::istream &pinput, std::ostream &poutput, std::ostream &perror) :
+            k(pk), ncircs(pncircs) {
         input = &pinput;
         output = &poutput;
         error = &perror;
@@ -69,6 +70,10 @@ public:
             tree.insert(cartesian(*it));
             proj_point = *it;
         }
+    }
+
+    void sample_with_geodesic_grid(int nrefines) {
+        Polyhedron_3<K> geodesic_grid;
         std::ifstream polygon_reader("icosahedron.off", std::ifstream::in);
         polygon_reader >> geodesic_grid;
         polygon_reader.close();
@@ -76,9 +81,6 @@ public:
         Subdivision_method_3::Loop_subdivision(geodesic_grid, nrefines);
 
         std::transform(geodesic_grid.points_begin(), geodesic_grid.points_end(), geodesic_grid.points_begin(), (Point_3<K>(*)(const Point_3<K>&))normalize);
-    }
-
-    void exec_output() {
         for (Vertex_iterator v_iter = geodesic_grid.vertices_begin(); v_iter != geodesic_grid.vertices_end(); v_iter++) {
             Point_3<K> point = v_iter->point();
             Halfedge_container h_cont(v_iter->vertex_begin());
@@ -91,38 +93,32 @@ public:
                 double dist = great_circle_dist(point, circ_center);
                 max_dist = std::max(max_dist, dist);
             }
-            double k1_dist = distance_func(point);
-            #ifdef USE_STEREOGRAPHIC
-            /*
-            Point_3<K> infinity = reverse(cartesian(proj_point));
-            Point_2<K> true_center = stereo(v_iter->point());
-            Point_2<K> circle_center;
-            if ((v_iter->point()-infinity).squared_length() < (v_iter->point()-near_neighbors[(k+1)-1].first).squared_length()) {
-                circle_center = stereo(reverse(v_iter->point()));
-            } else {
-                circle_center = true_center;
-            }
-            Point_2<K> k1_proj = stereo(k1_point);
-            double rad = sqrt((circle_center-k1_proj).squared_length());
-            output << true_center.x() << "\t" << true_center.y() << "\t";
-            output << circle_center.x() << "\t" << circle_center.y() << "\t";
-            output << rad << "\t";
-            output << sqrt((true_center-stereo(max_center)).squared_length());
-            output << std::endl;
-            */
-            #else
-            Point_2<K> coords = spherical(point);
-            *output << coords.x() << "\t" << coords.y() << "\t";
-            *output << k1_dist << "\t" << max_dist << "\t";
-            *output << std::endl;
-            #endif
+            KCircle partial_circ(point, -1, max_dist);
+            kcircles.push_back(partial_circ);
+        }
+    }
+
+    void run_sequential() {
+        for (int i = 0; i < kcircles.size(); i++) {
+            calc_kcircle_radius(kcircles[i]);
+        }
+    }
+
+    void output_results() {
+        std::sort(kcircles.begin(), kcircles.end(), KCircle::compare_radii);
+        int nkcircles = kcircles.size();
+        int limit = std::min(nkcircles, ncircs);
+        for (int i = 0; i < limit; i++) {
+            kcircles[i].project_and_display(*output);
         }
     }
 };
 
 namespace CGAL {
     void run_grid_sampling(int k, int ncircs, int nrefines, std::istream &input, std::ostream &output, std::ostream &error) {
-        Grid_sampling gs(k, ncircs, nrefines, input, output, error);
-        gs.exec_output();
+        Grid_sampling gs(k, ncircs, input, output, error);
+        gs.sample_with_geodesic_grid(nrefines);
+        gs.run_sequential();
+        gs.output_results();
     }
 }

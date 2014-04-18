@@ -4,26 +4,27 @@
 
 #include <vector>
 #include <utility>
-#include <CGAL/Object.h>
-#include <CGAL/Cartesian.h>
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <iostream>
+#include <boost/format.hpp>
 #include "Utility.h"
 
 namespace CGAL {
-    class Solution {
+    class KCircle {
 
     public:
+
         Point_3<K> center;
         double rad, eps;
 
-        Solution(Point_3<K> pcenter, double prad, double peps) :
+        KCircle(Point_3<K> pcenter, double prad, double peps) :
             center(pcenter), rad(prad), eps(peps) {}
 
         void project_and_display(std::ostream &output) {
             Point_2<K> coordinates = spherical(center);
-            output << coordinates.x() << "\t" << coordinates.y() << "\t";
-            output << rad << "\t" << eps << "\t";
+            output << boost::format("%.07f") % coordinates.x() << "\t";
+            output << boost::format("%.07f") % coordinates.y() << "\t";
+            output << boost::format("%.07f") % rad << "\t";
+            output << boost::format("%.07f") % eps << "\t";
             output << std::endl;
         }
 
@@ -42,6 +43,10 @@ namespace CGAL {
             std::cout << std::endl;
         }
         */
+
+        static bool compare_radii(KCircle a, KCircle b) {
+            return a.rad > b.rad;
+        }
 
     };
 }

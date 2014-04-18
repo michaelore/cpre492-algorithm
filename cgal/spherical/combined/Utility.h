@@ -3,8 +3,8 @@
 #define UTILITY_H
 
 #define TAU 6.2831853071
-#define RADIUS 6371.009
-#define EPS 1e-12
+#define RADIUS 6371009
+#define EPSILON 1e-12
 
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Point_2.h>
