@@ -4,7 +4,7 @@
 
 #define TAU 6.2831853071
 #define RADIUS 6371009
-#define EPSILON 1e-12
+#define EPSILON 1e-8
 
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Point_2.h>
@@ -60,6 +60,7 @@ namespace CGAL {
         return result;
     }
 
+    // Converts a 2D point in spherical coordinates (lat, lon) into a 3D point in cartesian coordinates (x, y, z) on a unit sphere
     Point_3<K> cartesian(const Point_2<K> &p) {
         double lat = to_double(p.x())*TAU/360;
         double colat = TAU/4-lat;
@@ -71,6 +72,7 @@ namespace CGAL {
         return result;
     }
 
+    // Converts a 3D point in cartesian coordinates (x, y, z) into a 2D point in spherical coordinates (lat, lon)
     Point_2<K> spherical(const Point_3<K> &p) {
         double x = to_double(p.x());
         double y = to_double(p.y());
@@ -83,6 +85,9 @@ namespace CGAL {
         return result;
     }
 
+    // Converts a 3D point in cartesian coordinates (x, y, z) into a 2D point with a stereographic projection
+    // (clat, clon) are the latitude and longitude of the "center" of the stereographic projection, where there is no distortion
+    // radius is just the radius of the earth, used to determine scale. The RADIUS constant defined at the top of Utility.h should always be used (average radius of earth in meters)
     Point_2<K> stereographic(const Point_3<K> &p3, double clat, double clon, double radius) {
         double phi1 = clat*TAU/360;
         double lam0 = clon*TAU/360;
@@ -96,6 +101,8 @@ namespace CGAL {
         Point_2<K> result(x, y);
         return result;
     }
+
+    // an inverse stereographic projection function and functions for stereographic projections of circles are missing
 }
 
 #endif // UTILITY_H
