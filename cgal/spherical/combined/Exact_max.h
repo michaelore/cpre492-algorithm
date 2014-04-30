@@ -67,9 +67,11 @@ public:
             int negatives = 0;
             for (int i = 0; i < coordinates.size(); i++) {
                 Point_3<K> p = coordinates[i];
-                if (divide.has_on_positive_side(p)) {
+                Point_3<K> proj = divide.projection(p);
+                double err = sqrt((p-proj).squared_length());
+                if (err > EPSILON && divide.has_on_positive_side(p)) {
                     positives++;
-                } else if (divide.has_on_negative_side(p)) {
+                } else if (err > EPSILON && divide.has_on_negative_side(p)) {
                     negatives++;
                 } else {
                     *error << "DEBUG: Coordinate directly on dividing plane in combination of 3" << std::endl;
@@ -90,7 +92,7 @@ public:
             if ((mid-ORIGIN).squared_length() < EPSILON) {
                 *error << "WARNING: Skipping combination of 2 because they are ~antipodal" << std::endl;
             }
-            Plane_3<K> divide(*set3[0], mid-ORIGIN);
+            Plane_3<K> divide(*set2[0], mid-ORIGIN);
             if (divide.is_degenerate()) {
                 *error << "WARNING: Skipping combination of 2 because the dividing plane is degenerate" << std::endl;
                 continue;
@@ -109,9 +111,11 @@ public:
             int negatives = 0;
             for (int i = 0; i < coordinates.size(); i++) {
                 Point_3<K> p = coordinates[i];
-                if (divide.has_on_positive_side(p)) {
+                Point_3<K> proj = divide.projection(p);
+                double err = sqrt((p-proj).squared_length());
+                if (err > EPSILON && divide.has_on_positive_side(p)) {
                     positives++;
-                } else if (divide.has_on_negative_side(p)) {
+                } else if (err > EPSILON && divide.has_on_negative_side(p)) {
                     negatives++;
                 } else {
                     *error << "DEBUG: Coordinate directly on dividing plane in combination of 2" << std::endl;
