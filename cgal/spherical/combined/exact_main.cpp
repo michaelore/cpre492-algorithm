@@ -2,6 +2,8 @@
 #include <fstream>
 #include "Exact_max.h"
 
+//#define DEBUG
+
 using namespace std;
 
 int main(int argc, char* argv[]) {

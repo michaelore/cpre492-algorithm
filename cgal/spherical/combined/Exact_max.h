@@ -74,7 +74,9 @@ public:
                 } else if (err > EPSILON && divide.has_on_negative_side(p)) {
                     negatives++;
                 } else {
+                    #ifdef DEBUG
                     *error << "DEBUG: Coordinate directly on dividing plane in combination of 3" << std::endl;
+                    #endif
                 }
             }
             if (positives == k) {
@@ -118,7 +120,9 @@ public:
                 } else if (err > EPSILON && divide.has_on_negative_side(p)) {
                     negatives++;
                 } else {
+                    #ifdef DEBUG
                     *error << "DEBUG: Coordinate directly on dividing plane in combination of 2" << std::endl;
+                    #endif
                 }
             }
             if (positives == k) {
