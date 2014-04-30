@@ -102,7 +102,23 @@ namespace CGAL {
         return result;
     }
 
-    // an inverse stereographic projection function and functions for stereographic projections of circles are missing
+    // Inverse of stereographic(...), WARNING: I believe it is incorrect
+    Point_3<K> inv_stereographic(const Point_2<K> &p2, double clat, double clon, double radius) {
+        double phi1 = clat*TAU/360;
+        double lam0 = clon*TAU/360;
+        double R = radius;
+        double x = p2.x();
+        double y = p2.y();
+        double rho = sqrt(x*x+y*y);
+        double c = 2*atan2(rho, 2*R);
+        double phi = asin(cos(c)*sin(phi1)+y*sin(c)*cos(phi1)/rho);
+        double lam = lam0 + atan2(x*sin(c), rho*cos(phi1)*cos(c) - y*sin(phi1)*sin(c));
+        Point_2<K> sphere_coord(phi, lam);
+        Point_3<K> result = cartesian(sphere_coord);
+        return result;
+    }
+
+    // functions for stereographic projections of circles are missing
 }
 
 #endif // UTILITY_H
