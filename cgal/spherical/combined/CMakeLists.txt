@@ -1,8 +1,8 @@
-# Created by the script cgal_create_cmake_script_with_options
-# This is the CMake script for compiling a set of CGAL applications.
+# Created by the script cgal_create_cmake_script
+# This is the CMake script for compiling a CGAL application.
 
-project( combined )
 
+project( combined_ )
 
 cmake_minimum_required(VERSION 2.6.2)
 if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER 2.6)
@@ -13,51 +13,22 @@ if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER 2.6)
   endif()
 endif()
 
-set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true )
- 
-if ( COMMAND cmake_policy )
+find_package(CGAL QUIET COMPONENTS Core )
 
-  cmake_policy( SET CMP0003 NEW )  
+if ( CGAL_FOUND )
 
+  include( ${CGAL_USE_FILE} )
+
+  include( CGAL_CreateSingleSourceCGALProgram )
+
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  create_single_source_cgal_program( "exact_main.cpp" )
+  create_single_source_cgal_program( "grid_main.cpp" )
+  create_single_source_cgal_program( "test_main.cpp" )
+
+else()
+  
+    message(STATUS "This program requires the CGAL library, and will not be compiled.")
+  
 endif()
-
-# CGAL and its components
-find_package( CGAL QUIET COMPONENTS  )
-
-if ( NOT CGAL_FOUND )
-
-  message(STATUS "This project requires the CGAL library, and will not be compiled.")
-  return()  
-
-endif()
-
-# include helper file
-include( ${CGAL_USE_FILE} )
-
-
-# Boost and its components
-find_package( Boost REQUIRED )
-
-if ( NOT Boost_FOUND )
-
-  message(STATUS "This project requires the Boost library, and will not be compiled.")
-
-  return()  
-
-endif()
-
-# include for local directory
-
-# include for local package
-
-
-# Creating entries for all .cpp/.C files with "main" routine
-# ##########################################################
-
-include( CGAL_CreateSingleSourceCGALProgram )
-
-create_single_source_cgal_program( "exact_main.cpp" )
-
-create_single_source_cgal_program( "grid_main.cpp" )
-
 
